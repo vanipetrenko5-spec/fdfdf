@@ -1,4 +1,3 @@
-
 name: Build Fabric Mod
 on: [push, pull_request]
 jobs:
@@ -13,80 +12,40 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10'
+      - name: Download Official Fabric Template
+        run: |
+          # Клонируем чистый официальный шаблон Fabric Mod
+          git clone --depth 1 https://github.com template
+          
+          # Очищаем дефолтные исходники шаблона
+          rm -rf template/src/main/java/*
+          
+          # Копируем идеальные файлы сборщика в корень
+          cp template/build.gradle .
+          cp template/settings.gradle .
+          cp template/gradle.properties .
+          cp -r template/gradle .
+          cp template/gradlew .
+
+      - name: Configure Versions for 1.21.11
+        run: |
+          # Жестко прописываем официальные версии для Minecraft 1.21.11
+          cat << 'EOF' > gradle.properties
+          minecraft_version=1.21.11
+          yarn_mappings=1.21.11+build.1
+          loader_version=0.16.10
+          mod_version=1.0.0
+          mod_group=com.mod.ahsell
+          mod_id=ahsell
+          EOF
 
       - name: Unzip project code
         run: |
-          # Распаковываем ваш архив в корень проекта
+          # Распаковываем ваши файлы кода поверх структуры
           unzip -o "ahsell-mod (1).zip" -d .
 
-      - name: Inject Fabric Configurations
-        run: |
-          # Настраиваем репозитории плагина прямо внутри build.gradle (в обход settings.gradle)
-          cat << 'EOF' > build.gradle
-          buildscript {
-              repositories {
-                  maven { url "https://maven.fabricmc.net/" }
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath "net.fabricmc:fabric-loom:1.7-SNAPSHOT"
-              }
-          }
-
-          apply plugin: 'java'
-          apply plugin: 'net.fabricmc.fabric-loom'
-          
-          version = '1.0.0'
-          group = 'com.mod.ahsell'
-          
-          repositories {
-              mavenCentral()
-              maven { url 'https://maven.fabricmc.net/' }
-          }
-          
-          dependencies {
-              minecraft "com.mojang:minecraft:1.21.11"
-              mappings "net.fabricmc:yarn:1.21.11+build.1:v2"
-              modImplementation "net.fabricmc:fabric-loader:0.15.11"
-          }
-          
-          tasks.withType(JavaCompile).configureEach {
-              it.options.release = 21
-          }
-          EOF
-
-          # Очищаем settings.gradle, чтобы он не мешал
-          echo "rootProject.name = 'ahsell-mod'" > settings.gradle
-
-          # Добавляем обязательный манифест для модов Fabric
-          mkdir -p src/main/resources
-          cat << 'EOF' > src/main/resources/fabric.mod.json
-          {
-            "schemaVersion": 1,
-            "id": "ahsell",
-            "version": "${version}",
-            "name": "AhSell Mod",
-            "description": "Created with Claude AI",
-            "authors": ["Ivan"],
-            "contact": {},
-            "license": "MIT",
-            "environment": "*",
-            "entrypoints": {
-              "main": ["com.mod.ahsell.AhSellMod"]
-            },
-            "depends": {
-              "fabricloader": ">=0.15.11",
-              "minecraft": "~1.21.11"
-            }
-          }
-          EOF
-
-      - name: Generate Gradle Wrapper
-        run: gradle wrapper
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build Fabric Jar
         run: ./gradlew build
@@ -96,3 +55,4 @@ jobs:
         with:
           name: Fabric-Mod-1.21.11-Jar
           path: build/libs/*.jar
+          
