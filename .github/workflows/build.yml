@@ -14,13 +14,8 @@ jobs:
 
       - name: Download Official Fabric Template
         run: |
-          # Клонируем чистый официальный шаблон Fabric Mod
           git clone --depth 1 https://github.com template
-          
-          # Очищаем дефолтные исходники шаблона
           rm -rf template/src/main/java/*
-          
-          # Копируем идеальные файлы сборщика в корень
           cp template/build.gradle .
           cp template/settings.gradle .
           cp template/gradle.properties .
@@ -29,7 +24,6 @@ jobs:
 
       - name: Configure Versions for 1.21.11
         run: |
-          # Жестко прописываем официальные версии для Minecraft 1.21.11
           cat << 'EOF' > gradle.properties
           minecraft_version=1.21.11
           yarn_mappings=1.21.11+build.1
@@ -41,7 +35,6 @@ jobs:
 
       - name: Unzip project code
         run: |
-          # Распаковываем ваши файлы кода поверх структуры
           unzip -o "ahsell-mod (1).zip" -d .
 
       - name: Setup Gradle
@@ -55,4 +48,3 @@ jobs:
         with:
           name: Fabric-Mod-1.21.11-Jar
           path: build/libs/*.jar
-          
