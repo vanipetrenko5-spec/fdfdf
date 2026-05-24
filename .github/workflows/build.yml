@@ -17,13 +17,17 @@ jobs:
         
       - name: Create Fabric Environment
         run: |
-          # Создаем базовые конфигурационные файлы Fabric
+          # Правильно прописываем репозитории для плагинов Gradle 9
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
                   maven { url 'https://maven.fabricmc.net/' }
                   mavenCentral()
+                  gradlePluginPortal()
               }
+          }
+          plugins {
+              id 'net.fabricmc.fabric-loom' version '1.9-SNAPSHOT'
           }
           rootProject.name = 'ahsell-mod'
           EOF
@@ -31,25 +35,26 @@ jobs:
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
-              id 'net.fabricmc.fabric-loom' version '1.15'
+              id 'net.fabricmc.fabric-loom'
           }
           version = '1.0.0'
           group = 'com.mod.ahsell'
           
           repositories {
               mavenCentral()
+              maven { url 'https://maven.fabricmc.net/' }
           }
           dependencies {
               minecraft "com.mojang:minecraft:1.21.11"
               mappings "net.fabricmc:yarn:1.21.11+build.1:v2"
-              modImplementation "net.fabricmc:fabric-loader:0.18.4"
+              modImplementation "net.fabricmc:fabric-loader:0.19.2"
           }
           tasks.withType(JavaCompile).configureEach {
               it.options.release = 21
           }
           EOF
 
-          # Создаем обязательный манифест мода Fabric
+          # Генерируем обязательный манифест мода Fabric
           mkdir -p src/main/resources
           cat << 'EOF' > src/main/resources/fabric.mod.json
           {
@@ -66,7 +71,7 @@ jobs:
               "main": ["com.mod.ahsell.AhSellMod"]
             },
             "depends": {
-              "fabricloader": ">=0.18.4",
+              "fabricloader": ">=0.19.2",
               "minecraft": "~1.21.11"
             }
           }
