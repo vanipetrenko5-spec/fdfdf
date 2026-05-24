@@ -11,10 +11,20 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          
-      - name: Create Fabric Environment
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
+
+      - name: Unzip project code
         run: |
-          # Правильная инициализация репозитория плагинов Fabric для Gradle 8.x
+          # Сначала распаковываем ваш архив в корень проекта
+          unzip -o "ahsell-mod (1).zip" -d .
+
+      - name: Inject Fabric Configurations
+        run: |
+          # Перезаписываем конфигурационные файлы прямо поверх распакованного архива
           cat << 'EOF' > settings.gradle
           pluginManagement {
               repositories {
@@ -26,12 +36,10 @@ jobs:
           rootProject.name = 'ahsell-mod'
           EOF
 
-          # Настраиваем конфигурацию плагинов и зависимостей Fabric 1.21.11
           cat << 'EOF' > build.gradle
           plugins {
               id 'java'
-                  // Используем официальный проверенный плагин Loom под версию 1.21.11
-              id 'net.fabricmc.fabric-loom' version '1.14' 
+              id 'net.fabricmc.fabric-loom' version '1.7-SNAPSHOT'
           }
           
           version = '1.0.0'
@@ -45,7 +53,7 @@ jobs:
           dependencies {
               minecraft "com.mojang:minecraft:1.21.11"
               mappings "net.fabricmc:yarn:1.21.11+build.1:v2"
-              modImplementation "net.fabricmc:fabric-loader:0.18.1"
+              modImplementation "net.fabricmc:fabric-loader:0.15.11"
           }
           
           tasks.withType(JavaCompile).configureEach {
@@ -53,7 +61,7 @@ jobs:
           }
           EOF
 
-          # Генерируем обязательный манифест Fabric
+          # Добавляем обязательный манифест для модов Fabric
           mkdir -p src/main/resources
           cat << 'EOF' > src/main/resources/fabric.mod.json
           {
@@ -70,19 +78,11 @@ jobs:
               "main": ["com.mod.ahsell.AhSellMod"]
             },
             "depends": {
-              "fabricloader": ">=0.18.1",
+              "fabricloader": ">=0.15.11",
               "minecraft": "~1.21.11"
             }
           }
           EOF
-
-      - name: Unzip project code
-        run: unzip -o "ahsell-mod (1).zip" -d .
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10'
 
       - name: Generate Gradle Wrapper
         run: gradle wrapper
