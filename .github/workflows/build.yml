@@ -14,13 +14,10 @@ jobs:
 
       - name: Download Official Fabric Template
         run: |
-          git clone --depth 1 https://github.com template
-          rm -rf template/src/main/java/*
-          cp template/build.gradle .
-          cp template/settings.gradle .
-          cp template/gradle.properties .
-          cp -r template/gradle .
-          cp template/gradlew .
+          curl -L https://github.com -o template.zip
+          unzip template.zip
+          mv fabric-example-mod-1.21/* .
+          rm -rf src/main/java/*
 
       - name: Configure Versions for 1.21.11
         run: |
