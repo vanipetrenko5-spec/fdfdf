@@ -1,3 +1,4 @@
+
 name: Build Fabric Mod
 on: [push, pull_request]
 jobs:
@@ -19,28 +20,25 @@ jobs:
 
       - name: Unzip project code
         run: |
-          # Сначала распаковываем ваш архив в корень проекта
+          # Распаковываем ваш архив в корень проекта
           unzip -o "ahsell-mod (1).zip" -d .
 
       - name: Inject Fabric Configurations
         run: |
-          # Перезаписываем конфигурационные файлы прямо поверх распакованного архива
-          cat << 'EOF' > settings.gradle
-          pluginManagement {
+          # Настраиваем репозитории плагина прямо внутри build.gradle (в обход settings.gradle)
+          cat << 'EOF' > build.gradle
+          buildscript {
               repositories {
-                  maven { url 'https://maven.fabricmc.net/' }
+                  maven { url "https://maven.fabricmc.net/" }
                   mavenCentral()
-                  gradlePluginPortal()
+              }
+              dependencies {
+                  classpath "net.fabricmc:fabric-loom:1.7-SNAPSHOT"
               }
           }
-          rootProject.name = 'ahsell-mod'
-          EOF
 
-          cat << 'EOF' > build.gradle
-          plugins {
-              id 'java'
-              id 'net.fabricmc.fabric-loom' version '1.7-SNAPSHOT'
-          }
+          apply plugin: 'java'
+          apply plugin: 'net.fabricmc.fabric-loom'
           
           version = '1.0.0'
           group = 'com.mod.ahsell'
@@ -60,6 +58,9 @@ jobs:
               it.options.release = 21
           }
           EOF
+
+          # Очищаем settings.gradle, чтобы он не мешал
+          echo "rootProject.name = 'ahsell-mod'" > settings.gradle
 
           # Добавляем обязательный манифест для модов Fabric
           mkdir -p src/main/resources
