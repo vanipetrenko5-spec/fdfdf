@@ -1,3 +1,4 @@
+
 name: Build Fabric Mod
 on: [push, pull_request]
 jobs:
@@ -14,24 +15,21 @@ jobs:
           
       - name: Create Fabric Environment
         run: |
-          # Настраиваем репозитории плагинов под требования Fabric
-          cat << 'EOF' > settings.gradle
-          pluginManagement {
+          # Настраиваем чистый build.gradle по официальным гайдам Fabric 1.21.11
+          cat << 'EOF' > build.gradle
+          buildscript {
               repositories {
                   maven { url 'https://maven.fabricmc.net/' }
                   mavenCentral()
-                  gradlePluginPortal()
+              }
+              dependencies {
+                  classpath 'net.fabricmc:fabric-loom:1.7-SNAPSHOT'
               }
           }
-          rootProject.name = 'ahsell-mod'
-          EOF
 
-          # Настраиваем сборщик под Майнкрафт 1.21.11
-          cat << 'EOF' > build.gradle
-          plugins {
-              id 'java'
-              id 'net.fabricmc.fabric-loom-remap' version '1.14'
-          }
+          apply plugin: 'java'
+          apply plugin: 'net.fabricmc.fabric-loom'
+
           version = '1.0.0'
           group = 'com.mod.ahsell'
           
@@ -42,14 +40,17 @@ jobs:
           dependencies {
               minecraft "com.mojang:minecraft:1.21.11"
               mappings "net.fabricmc:yarn:1.21.11+build.1:v2"
-              modImplementation "net.fabricmc:fabric-loader:0.18.1"
+              modImplementation "net.fabricmc:fabric-loader:0.15.11"
           }
           tasks.withType(JavaCompile).configureEach {
               it.options.release = 21
           }
           EOF
 
-          # Генерируем манифест мода для лаунчера Fabric
+          # Создаем пустой settings.gradle, чтобы плагины не искались в глобальном реестре
+          echo "rootProject.name = 'ahsell-mod'" > settings.gradle
+
+          # Генерируем обязательный манифест мода
           mkdir -p src/main/resources
           cat << 'EOF' > src/main/resources/fabric.mod.json
           {
@@ -66,7 +67,7 @@ jobs:
               "main": ["com.mod.ahsell.AhSellMod"]
             },
             "depends": {
-              "fabricloader": ">=0.18.1",
+              "fabricloader": ">=0.15.11",
               "minecraft": "~1.21.11"
             }
           }
@@ -75,7 +76,6 @@ jobs:
       - name: Unzip project code
         run: unzip -o "ahsell-mod (1).zip" -d .
 
-      # Принудительно ставим стабильный Gradle 8.10 вместо 9.5
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -91,4 +91,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Fabric-Mod-1.21.11-Jar
-          path: build/libs/*-repo.jar
+          path: build/libs/*.jar
